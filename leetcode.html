@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LC Grind — LeetCode Revision Tracker</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --border2: #3a3a3a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #f0c040;
+    --accent-dim: #f0c04022;
+    --easy: #4ade80;
+    --easy-bg: #4ade8015;
+    --medium: #f0c040;
+    --medium-bg: #f0c04015;
+    --hard: #f87171;
+    --hard-bg: #f8717115;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* NAV */
+  nav { border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  .logo { font-family: var(--mono); font-size: 15px; color: var(--accent); letter-spacing: -0.02em; }
+  .logo span { color: var(--muted); }
+  .nav-stats { display: flex; gap: 1.5rem; font-size: 12px; color: var(--muted); }
+  .nav-stats strong { color: var(--text); }
+
+  /* LAYOUT */
+  .container { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* HERO */
+  .hero { margin-bottom: 2rem; }
+  .hero h1 { font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .hero p { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .hero p em { font-style: normal; color: var(--accent); }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 180px; }
+  .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  input[type="text"] { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; padding: 9px 12px 9px 36px; outline: none; transition: border 0.15s; }
+  input[type="text"]:focus { border-color: var(--accent); }
+  select { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; padding: 9px 12px; outline: none; cursor: pointer; }
+  select:focus { border-color: var(--accent); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius-sm); font-size: 14px; cursor: pointer; border: none; transition: opacity 0.15s; font-weight: 500; }
+  .btn-accent { background: var(--accent); color: #000; }
+  .btn-accent:hover { opacity: 0.88; }
+  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+
+  /* FILTERS */
+  .filters { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .chip { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .chip:hover { border-color: var(--border2); color: var(--text); }
+  .chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .chip-easy.active { background: var(--easy-bg); border-color: var(--easy); color: var(--easy); }
+  .chip-medium.active { background: var(--medium-bg); border-color: var(--medium); color: var(--medium); }
+  .chip-hard.active { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); }
+
+  /* MODAL */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; }
+  .modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; letter-spacing: 0.04em; }
+  .field input, .field select, .field textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; padding: 9px 12px; outline: none; font-family: inherit; transition: border 0.15s; }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+  .btn-sm { padding: 7px 14px; font-size: 13px; }
+
+  /* CARDS */
+  .empty-state { text-align: center; padding: 4rem 1rem; color: var(--muted); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; margin-bottom: 4px; color: var(--text); }
+  .empty-state small { font-size: 13px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 10px; transition: border-color 0.15s; }
+  .card:hover { border-color: var(--border2); }
+  .card.solved { opacity: 0.55; }
+  .card-top { display: flex; align-items: flex-start; gap: 12px; }
+  .check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; margin-top: 2px; transition: all 0.15s; }
+  .check:hover { border-color: var(--easy); }
+  .check.done { background: var(--easy); border-color: var(--easy); }
+  .check.done svg { color: #000; }
+  .card-info { flex: 1; min-width: 0; }
+  .card-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .card-title { font-size: 15px; font-weight: 600; color: var(--text); text-decoration: none; }
+  .card-title:hover { color: var(--accent); }
+  .badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; font-family: var(--mono); }
+  .badge-easy { background: var(--easy-bg); color: var(--easy); }
+  .badge-medium { background: var(--medium-bg); color: var(--medium); }
+  .badge-hard { background: var(--hard-bg); color: var(--hard); }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .card-meta { font-size: 12px; color: var(--muted); }
+  .card-body { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .section-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+  .section-text { font-size: 13px; color: #ccc; line-height: 1.65; white-space: pre-wrap; }
+  .mistakes-text { font-size: 13px; color: #f87171cc; line-height: 1.65; white-space: pre-wrap; }
+  .card-footer { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .btn-link { background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 4px; transition: color 0.15s; }
+  .btn-link:hover { color: var(--text); }
+  .btn-link.danger:hover { color: var(--hard); }
+
+  /* QUIZ MODE */
+  .quiz-bar { background: var(--accent-dim); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; display: none; }
+  .quiz-bar p { font-size: 13px; color: var(--accent); }
+  .quiz-nav { display: flex; gap: 8px; }
+
+  /* STATS PILLS */
+  .stats-row { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .stat-pill { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; font-size: 12px; color: var(--muted); }
+  .stat-pill strong { color: var(--text); font-size: 18px; display: block; margin-bottom: 1px; }
+
+  @media (max-width: 600px) {
+    .field-row { grid-template-columns: 1fr; }
+    .nav-stats { display: none; }
+    .hero p { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">lc<span>/</span>grind</div>
+  <div class="nav-stats" id="nav-stats"></div>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>revision tracker</h1>
+    <p>Your problems. Your notes. <em>Ace the interview.</em></p>
+  </div>
+
+  <div class="stats-row" id="stats-row"></div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="Search problems or tags…" oninput="render()">
+    </div>
+    <select id="sort-select" onchange="render()">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="alpha">A → Z</option>
+      <option value="unsolved">Unsolved first</option>
+    </select>
+    <button class="btn btn-accent" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Add problem
+    </button>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="chip active" data-filter="All" onclick="setFilter('All', this)">All</button>
+    <button class="chip chip-easy" data-filter="Easy" onclick="setFilter('Easy', this)">Easy</button>
+    <button class="chip chip-medium" data-filter="Medium" onclick="setFilter('Medium', this)">Medium</button>
+    <button class="chip chip-hard" data-filter="Hard" onclick="setFilter('Hard', this)">Hard</button>
+    <button class="chip" data-filter="Unsolved" onclick="setFilter('Unsolved', this)">Unsolved</button>
+    <button class="chip" data-filter="Solved" onclick="setFilter('Solved', this)">Solved</button>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-backdrop" id="modal" onclick="closeOnBackdrop(event)">
+  <div class="modal">
+    <h2 id="modal-title">Add problem</h2>
+    <div class="field">
+      <label>PROBLEM NAME *</label>
+      <input type="text" id="f-name" placeholder="e.g. Two Sum">
+    </div>
+    <div class="field">
+      <label>LEETCODE URL</label>
+      <input type="text" id="f-url" placeholder="https://leetcode.com/problems/two-sum/">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>DIFFICULTY</label>
+        <select id="f-diff">
+          <option>Easy</option>
+          <option selected>Medium</option>
+          <option>Hard</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>TOPIC TAG</label>
+        <input type="text" id="f-tag" placeholder="e.g. Sliding Window">
+      </div>
+    </div>
+    <div class="field">
+      <label>APPROACH / HOW TO THINK ABOUT IT</label>
+      <textarea id="f-approach" placeholder="e.g. Use two pointers. Start both ends, move left pointer if sum < target, right if sum > target..."></textarea>
+    </div>
+    <div class="field">
+      <label>SILLY MISTAKES TO AVOID</label>
+      <textarea id="f-mistakes" placeholder="e.g. Forgetting off-by-one when window shrinks. Not resetting count variable on each outer loop..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent btn-sm" onclick="saveProblem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let problems = [];
+let activeFilter = 'All';
+let editId = null;
+
+function load() {
+  try {
+    const d = localStorage.getItem('lcgrind_v2');
+    if (d) problems = JSON.parse(d);
+  } catch(e) {}
+}
+
+function save() {
+  try { localStorage.setItem('lcgrind_v2', JSON.stringify(problems)); } catch(e) {}
+}
+
+function openModal(id) {
+  editId = id || null;
+  const m = document.getElementById('modal');
+  document.getElementById('modal-title').textContent = id ? 'Edit problem' : 'Add problem';
+  if (id) {
+    const p = problems.find(x => x.id === id);
+    document.getElementById('f-name').value = p.name;
+    document.getElementById('f-url').value = p.url || '';
+    document.getElementById('f-diff').value = p.diff;
+    document.getElementById('f-tag').value = p.tag || '';
+    document.getElementById('f-approach').value = p.approach || '';
+    document.getElementById('f-mistakes').value = p.mistakes || '';
+  } else {
+    ['f-name','f-url','f-tag','f-approach','f-mistakes'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('f-diff').value = 'Medium';
+  }
+  m.classList.add('open');
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); editId = null; }
+function closeOnBackdrop(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+
+function saveProblem() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+  const p = {
+    id: editId || Date.now(),
+    name,
+    url: document.getElementById('f-url').value.trim(),
+    diff: document.getElementById('f-diff').value,
+    tag: document.getElementById('f-tag').value.trim(),
+    approach: document.getElementById('f-approach').value.trim(),
+    mistakes: document.getElementById('f-mistakes').value.trim(),
+    solved: false,
+    ts: Date.now()
+  };
+  if (editId) {
+    const idx = problems.findIndex(x => x.id === editId);
+    p.solved = problems[idx].solved;
+    p.ts = problems[idx].ts;
+    problems[idx] = p;
+  } else {
+    problems.unshift(p);
+  }
+  save(); closeModal(); render();
+}
+
+function deleteProblem(id) {
+  if (!confirm('Remove this problem?')) return;
+  problems = problems.filter(p => p.id !== id);
+  save(); render();
+}
+
+function toggleSolved(id) {
+  const p = problems.find(x => x.id === id);
+  if (p) { p.solved = !p.solved; save(); render(); }
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const sort = document.getElementById('sort-select').value;
+
+  let list = problems.filter(p => {
+    const match = p.name.toLowerCase().includes(q) || (p.tag||'').toLowerCase().includes(q);
+    if (!match) return false;
+    if (activeFilter === 'All') return true;
+    if (activeFilter === 'Unsolved') return !p.solved;
+    if (activeFilter === 'Solved') return p.solved;
+    return p.diff === activeFilter;
+  });
+
+  if (sort === 'oldest') list = [...list].sort((a,b) => a.ts - b.ts);
+  else if (sort === 'alpha') list = [...list].sort((a,b) => a.name.localeCompare(b.name));
+  else if (sort === 'unsolved') list = [...list].sort((a,b) => Number(a.solved) - Number(b.solved));
+  else list = [...list].sort((a,b) => b.ts - a.ts);
+
+  const total = problems.length;
+  const solved = problems.filter(p => p.solved).length;
+  const easy = problems.filter(p => p.diff === 'Easy').length;
+  const med = problems.filter(p => p.diff === 'Medium').length;
+  const hard = problems.filter(p => p.diff === 'Hard').length;
+
+  document.getElementById('nav-stats').innerHTML = `<span><strong>${solved}</strong>/${total} solved</span>`;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-pill"><strong>${total}</strong>total</div>
+    <div class="stat-pill"><strong style="color:var(--easy)">${easy}</strong>easy</div>
+    <div class="stat-pill"><strong style="color:var(--medium)">${med}</strong>medium</div>
+    <div class="stat-pill"><strong style="color:var(--hard)">${hard}</strong>hard</div>
+    <div class="stat-pill"><strong>${total - solved}</strong>to review</div>
+  `;
+
+  if (list.length === 0) {
+    document.getElementById('list').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📂</div>
+        <p>${problems.length === 0 ? 'No problems yet' : 'Nothing matches'}</p>
+        <small>${problems.length === 0 ? 'Hit "Add problem" to save your first one.' : 'Try a different filter or search.'}</small>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('list').innerHTML = list.map(p => {
+    const bc = p.diff === 'Easy' ? 'badge-easy' : p.diff === 'Hard' ? 'badge-hard' : 'badge-medium';
+    const date = new Date(p.ts).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+    return `<div class="card ${p.solved ? 'solved' : ''}">
+      <div class="card-top">
+        <div class="check ${p.solved ? 'done' : ''}" onclick="toggleSolved(${p.id})" title="Toggle solved">
+          ${p.solved ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+        </div>
+        <div class="card-info">
+          <div class="card-title-row">
+            ${p.url ? `<a href="${p.url}" class="card-title" target="_blank" rel="noopener">${escHtml(p.name)}</a>` : `<span class="card-title">${escHtml(p.name)}</span>`}
+            <span class="badge ${bc}">${p.diff}</span>
+            ${p.tag ? `<span class="tag">${escHtml(p.tag)}</span>` : ''}
+          </div>
+          <div class="card-meta">Added ${date}${p.solved ? ' · ✓ Solved' : ''}</div>
+        </div>
+      </div>
+      ${(p.approach || p.mistakes) ? `<div class="card-body">
+        ${p.approach ? `<div><div class="section-label">Approach</div><div class="section-text">${escHtml(p.approach)}</div></div>` : ''}
+        ${p.mistakes ? `<div><div class="section-label">Silly mistakes</div><div class="mistakes-text">⚠ ${escHtml(p.mistakes)}</div></div>` : ''}
+      </div>` : ''}
+      <div class="card-footer">
+        <button class="btn-link" onclick="openModal(${p.id})">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+        <button class="btn-link danger" onclick="deleteProblem(${p.id})">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Remove
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openModal(); }
+});
+
+load();
+render();
+</script>
+</body>
+</html>
